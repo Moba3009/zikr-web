@@ -24,11 +24,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// Variables globales pour les compteurs
 let remainingYasin = 41;
 let remainingYaLatif = 16641;
 let remainingIstighfar = 12000;
 let remainingBasmala = 12000;
 
+// Fonction pour ajouter un participant
 window.ajouterParticipant = async () => {
     const name = document.getElementById("participantName").value;
     const yasinCount = parseInt(document.getElementById("yasinCount").value) || 0;
@@ -90,6 +92,7 @@ window.ajouterParticipant = async () => {
     }
 };
 
+// Fonction pour supprimer un participant
 window.supprimerParticipant = async (docId) => {
     if (confirm("Êtes-vous sûr de vouloir supprimer cette entrée ?")) {
         try {
@@ -101,6 +104,7 @@ window.supprimerParticipant = async (docId) => {
     }
 };
 
+// Fonction pour mettre à jour l'état de complétion
 window.updateCompletion = async (docId, field, completed) => {
     try {
         const docRef = doc(db, "zikr", docId);
@@ -113,6 +117,7 @@ window.updateCompletion = async (docId, field, completed) => {
     }
 };
 
+// Fonction pour afficher les messages
 function showMessage(message) {
     const messageDiv = document.getElementById("successMessage");
     messageDiv.textContent = message;
@@ -122,6 +127,7 @@ function showMessage(message) {
     }, 3000);
 }
 
+// Fonction pour mettre à jour les compteurs
 function updateRemainingCounts(snapshot) {
     let totalYasin = 0;
     let totalYaLatif = 0;
@@ -147,6 +153,7 @@ function updateRemainingCounts(snapshot) {
     document.getElementById("remainingBasmala").textContent = remainingBasmala;
 }
 
+// Fonction pour charger et afficher les participants
 function chargerParticipants() {
     const q = query(collection(db, "zikr"), orderBy("timestamp", "desc"));
     
@@ -168,30 +175,46 @@ function chargerParticipants() {
             // Yasin avec checkbox
             const yasinCell = row.insertCell(1);
             yasinCell.setAttribute('data-label', 'Yasin');
-            yasinCell.innerHTML = `${data.yasinCount || 0} <input type="checkbox" 
-                ${data.yasinCompleted ? 'checked' : ''} 
-                onchange="updateCompletion('${doc.id}', 'yasin', this.checked)">`;
+            yasinCell.innerHTML = `
+                <span class="zikr-count">${data.yasinCount || 0}</span>
+                <span class="checkbox-wrapper">
+                    <input type="checkbox" 
+                        ${data.yasinCompleted ? 'checked' : ''} 
+                        onchange="updateCompletion('${doc.id}', 'yasin', this.checked)">
+                </span>`;
 
             // Ya Latif avec checkbox
             const yaLatifCell = row.insertCell(2);
             yaLatifCell.setAttribute('data-label', 'Ya Latif');
-            yaLatifCell.innerHTML = `${data.yaLatifCount || 0} <input type="checkbox" 
-                ${data.yaLatifCompleted ? 'checked' : ''} 
-                onchange="updateCompletion('${doc.id}', 'yaLatif', this.checked)">`;
+            yaLatifCell.innerHTML = `
+                <span class="zikr-count">${data.yaLatifCount || 0}</span>
+                <span class="checkbox-wrapper">
+                    <input type="checkbox" 
+                        ${data.yaLatifCompleted ? 'checked' : ''} 
+                        onchange="updateCompletion('${doc.id}', 'yaLatif', this.checked)">
+                </span>`;
 
             // Istighfar avec checkbox
             const istighfarCell = row.insertCell(3);
             istighfarCell.setAttribute('data-label', 'Istighfar');
-            istighfarCell.innerHTML = `${data.istighfarCount || 0} <input type="checkbox" 
-                ${data.istighfarCompleted ? 'checked' : ''} 
-                onchange="updateCompletion('${doc.id}', 'istighfar', this.checked)">`;
+            istighfarCell.innerHTML = `
+                <span class="zikr-count">${data.istighfarCount || 0}</span>
+                <span class="checkbox-wrapper">
+                    <input type="checkbox" 
+                        ${data.istighfarCompleted ? 'checked' : ''} 
+                        onchange="updateCompletion('${doc.id}', 'istighfar', this.checked)">
+                </span>`;
 
             // Basmala avec checkbox
             const basmalaCell = row.insertCell(4);
             basmalaCell.setAttribute('data-label', 'Basmala');
-            basmalaCell.innerHTML = `${data.basmalaCount || 0} <input type="checkbox" 
-                ${data.basmalaCompleted ? 'checked' : ''} 
-                onchange="updateCompletion('${doc.id}', 'basmala', this.checked)">`;
+            basmalaCell.innerHTML = `
+                <span class="zikr-count">${data.basmalaCount || 0}</span>
+                <span class="checkbox-wrapper">
+                    <input type="checkbox" 
+                        ${data.basmalaCompleted ? 'checked' : ''} 
+                        onchange="updateCompletion('${doc.id}', 'basmala', this.checked)">
+                </span>`;
             
             // Bouton Supprimer
             const deleteCell = row.insertCell(5);
