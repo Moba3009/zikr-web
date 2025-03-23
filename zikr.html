@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zikr en Groupe (Temps Réel)</title>
+    <style>
+        /* Styles de base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 2rem;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Styles des compteurs */
+        .counters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding: 0 1rem;
+        }
+
+        .counter-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .counter-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .counter-card strong {
+            color: #2c3e50;
+            font-size: 1.1rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .counter-card span {
+            display: block;
+            font-size: 2rem;
+            color: #3498db;
+        }
+
+        /* Styles du formulaire */
+        .form-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto 2rem auto;
+        }
+
+        .zikr-inputs {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .zikr-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .zikr-input-group label {
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        input {
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        /* Styles du tableau */
+        table {
+            width: 100%;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-collapse: collapse;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #3498db;
+            color: white;
+        }
+
+        .delete-btn {
+            background: #e74c3c;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+
+        /* Message de succès */
+        .success-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2ecc71;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            z-index: 1000;
+            display: none;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        /* Media Queries pour Mobile */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .counters {
+                grid-template-columns: 1fr;
+            }
+
+            .zikr-inputs {
+                grid-template-columns: 1fr;
+            }
+
+            /* Tableau version mobile */
+            table {
+                display: block;
+                background: transparent;
+                box-shadow: none;
+            }
+
+            thead {
+                display: none;
+            }
+
+            tbody tr {
+                display: block;
+                background: white;
+                margin-bottom: 1rem;
+                border-radius: 15px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }
+
+            td {
+                display: flex;
+                justify-content: space-between;
+                padding: 0.8rem;
+                border-bottom: 1px solid #eee;
+            }
+
+            td::before {
+                content: attr(data-label);
+                font-weight: bold;
+            }
+        }
+
+        /* Media Queries pour Tablette */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .counters {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-container {
+                max-width: 90%;
+            }
+        }
+    </style>
+
+    <script type="module">
+        // Import Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDvYHSzXro4wIrxzBFZItsVEnRh8Pg4nuM",
+            authDomain: "zikr-groupe.firebaseapp.com",
+            projectId: "zikr-groupe",
+            storageBucket: "zikr-groupe.firebasestorage.app",
+            messagingSenderId: "640272731972",
+            appId: "1:640272731972:web:c3a06660fa19a455b5d111"
+        };
+
+        // Initialisation Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Variables pour les compteurs
+        let remainingYasin = 41;
+        let remainingYaLatif = 16641;
+        let remainingIstighfar = 12000;
+        let remainingBasmala = 12000;
+
+        // Fonction pour ajouter un participant
+        window.ajouterParticipant = async () => {
+            const name = document.getElementById("participantName").value;
+            const yasinCount = parseInt(document.getElementById("yasinCount").value) || 0;
+            const yaLatifCount = parseInt(document.getElementById("yaLatifCount").value) || 0;
+            const istighfarCount = parseInt(document.getElementById("istighfarCount").value) || 0;
+            const basmalaCount = parseInt(document.getElementById("basmalaCount").value) || 0;
+
+            // Validation des entrées
+            if (!name) {
+                alert("Veuillez entrer un nom.");
+                return;
+            }
+
+            if (yasinCount === 0 && yaLatifCount === 0 && istighfarCount === 0 && basmalaCount === 0) {
+                alert("Veuillez entrer au moins un nombre de zikr.");
+                return;
+            }
+
+            // Vérification des limites
+            if (yasinCount > remainingYasin) {
+                alert(`Il ne reste que ${remainingYasin} Yasin disponibles.`);
+                return;
+            }
+            if (yaLatifCount > remainingYaLatif) {
+                alert(`Il ne reste que ${remainingYaLatif} Ya Latif disponibles.`);
+                return;
+            }
+            if (istighfarCount > remainingIstighfar) {
+                alert(`Il ne reste que ${remainingIstighfar} Istighfar disponibles.`);
+                return;
+            }
+            if (basmalaCount > remainingBasmala) {
+                alert(`Il ne reste que ${remainingBasmala} Basmala disponibles.`);
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, "zikr"), {
+                    name,
+                    yasinCount,
+                    yaLatifCount,
+                    istighfarCount,
+                    basmalaCount,
+                    timestamp: serverTimestamp()
+                });
+                
+                // Réinitialisation du formulaire
+                document.getElementById("participantName").value = "";
+                document.getElementById("yasinCount").value = "";
+                document.getElementById("yaLatifCount").value = "";
+                document.getElementById("istighfarCount").value = "";
+                document.getElementById("basmalaCount").value = "";
+                showMessage("Zikr ajouté avec succès !");
+            } catch (error) {
+                alert("Erreur lors de l'ajout: " + error.message);
+            }
+        };
+
+        // Fonction pour supprimer un participant
+        window.supprimerParticipant = async (docId) => {
+            if (confirm("Êtes-vous sûr de vouloir supprimer cette entrée ?")) {
+                try {
+                    await deleteDoc(doc(db, "zikr", docId));
+                    showMessage("Entrée supprimée avec succès");
+                } catch (error) {
+                    alert("Erreur lors de la suppression: " + error.message);
+                }
+            }
+        };
+
+        // Fonction pour afficher les messages
+        function showMessage(message) {
+            const messageDiv = document.getElementById("successMessage");
+            messageDiv.textContent = message;
+            messageDiv.style.display = "block";
+            setTimeout(() => {
+                messageDiv.style.display = "none";
+            }, 3000);
+        }
+
+        // Fonction pour mettre à jour les compteurs
+        function updateRemainingCounts(snapshot) {
+            let totalYasin = 0;
+            let totalYaLatif = 0;
+            let totalIstighfar = 0;
+            let totalBasmala = 0;
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                totalYasin += data.yasinCount || 0;
+                totalYaLatif += data.yaLatifCount || 0;
+                totalIstighfar += data.istighfarCount || 0;
+                totalBasmala += data.basmalaCount || 0;
+            });
+
+            remainingYasin = 41 - totalYasin;
+            remainingYaLatif = 16641 - totalYaLatif;
+            remainingIstighfar = 12000 - totalIstighfar;
+            remainingBasmala = 12000 - totalBasmala;
+
+            document.getElementById("remainingYasin").textContent = remainingYasin;
+            document.getElementById("remainingYaLatif").textContent = remainingYaLatif;
+            document.getElementById("remainingIstighfar").textContent = remainingIstighfar;
+            document.getElementById("remainingBasmala").textContent = remainingBasmala;
+        }
+
+        // Fonction pour charger et afficher les participants
+        async function chargerParticipants() {
+            const q = query(collection(db, "zikr"), orderBy("timestamp", "desc"));
+            
+            onSnapshot(q, (snapshot) => {
+                const table = document.getElementById("participantTable");
+                table.innerHTML = "";
+
+                updateRemainingCounts(snapshot);
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const row = table.insertRow();
+                    
+                    // Ajout des cellules avec les labels pour mobile
+                    const nameCell = row.insertCell(0);
+                    nameCell.setAttribute('data-label', 'Nom');
+                    nameCell.textContent = data.name;
+
+                    const yasinCell = row.insertCell(1);
+                    yasinCell.setAttribute('data-label', 'Yasin');
+                    yasinCell.textContent = data.yasinCount || 0;
+
+                    const yaLatifCell = row.insertCell(2);
+                    yaLatifCell.setAttribute('data-label', 'Ya Latif');
+                    yaLatifCell.textContent = data.yaLatifCount || 0;
+
+                    const istighfarCell = row.insertCell(3);
+                    istighfarCell.setAttribute('data-label', 'Istighfar');
+                    istighfarCell.textContent = data.istighfarCount || 0;
+
+                    const basmalaCell = row.insertCell(4);
+                    basmalaCell.setAttribute('data-label', 'Basmala');
+                    basmalaCell.textContent = data.basmalaCount || 0;
+                    
+                    const deleteCell = row.insertCell(5);
+                    //deleteCell.setAttribute('data-label', 'Actions');
+                    const deleteButton = document.createElement("button");
+                    deleteButton.textContent = "Supprimer";
+                    deleteButton.className = "delete-btn";
+                    deleteButton.onclick = () => supprimerParticipant(doc.id);
+                    deleteCell.appendChild(deleteButton);
+                });
+            });
+        }
+
+        // Démarrer l'application
+        chargerParticipants();
+    </script>
+</head>
+<body>
+    <h1>Zikr en Groupe</h1>
+    <div id="successMessage" class="success-message"></div>
+
+    <!-- Compteurs -->
+    <div class="counters">
+        <div class="counter-card">
+            <strong>Yasin restants</strong>
+            <span id="remainingYasin">41</span>
+        </div>
+        <div class="counter-card">
+            <strong>Ya Latif restants</strong>
+            <span id="remainingYaLatif">16641</span>
+        </div>
+        <div class="counter-card">
+            <strong>Istighfar restants</strong>
+            <span id="remainingIstighfar">12000</span>
+        </div>
+        <div class="counter-card">
+            <strong>Basmala restants</strong>
+            <span id="remainingBasmala">12000</span>
+        </div>
+    </div>
+
+    <!-- Formulaire -->
+    <div class="form-container">
+        <input type="text" id="participantName" placeholder="Nom" required>
+        <div class="zikr-inputs">
+            <div class="zikr-input-group">
+                <label for="yasinCount">Yasin</label>
+                <input type="number" id="yasinCount" placeholder="Nombre de Yasin" min="0">
+            </div>
+            <div class="zikr-input-group">
+                <label for="yaLatifCount">Ya Latif</label>
+                <input type="number" id="yaLatifCount" placeholder="Nombre de Ya Latif" min="0">
+            </div>
+            <div class="zikr-input-group">
+                <label for="istighfarCount">Istighfar</label>
+                <input type="number" id="istighfarCount" placeholder="Nombre d'Istighfar" min="0">
+            </div>
+            <div class="zikr-input-group">
+                <label for="basmalaCount">Basmala</label>
+                <input type="number" id="basmalaCount" placeholder="Nombre de Basmala" min="0">
+            </div>
+        </div>
+        <button onclick="ajouterParticipant()">Ajouter</button>
+    </div>
+
+    <!-- Tableau -->
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Yasin</th>
+                <th>Ya Latif</th>
+                <th>Istighfar</th>
+                <th>Basmala</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="participantTable"></tbody>
+    </table>
+</body>
+</html>
