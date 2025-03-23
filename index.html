@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zikr en Groupe (Temps Réel)</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Zikr en Groupe</h1>
+    <div id="successMessage" class="success-message"></div>
+
+    <div class="counters">
+        <div class="counter-card">
+            <strong>Yasin restants</strong>
+            <span id="remainingYasin">41</span>
+        </div>
+        <div class="counter-card">
+            <strong>Ya Latif restants</strong>
+            <span id="remainingYaLatif">16641</span>
+        </div>
+        <div class="counter-card">
+            <strong>Istighfar restants</strong>
+            <span id="remainingIstighfar">12000</span>
+        </div>
+        <div class="counter-card">
+            <strong>Basmala restants</strong>
+            <span id="remainingBasmala">12000</span>
+        </div>
+    </div>
+
+    <div class="form-container">
+        <input type="text" id="participantName" placeholder="Nom" required>
+        <div class="zikr-inputs">
+            <div class="zikr-input-group">
+                <label for="yasinCount">Yasin</label>
+                <input type="number" id="yasinCount" placeholder="Nombre de Yasin" min="0">
+            </div>
+            <div class="zikr-input-group">
+                <label for="yaLatifCount">Ya Latif</label>
+                <input type="number" id="yaLatifCount" placeholder="Nombre de Ya Latif" min="0">
+            </div>
+            <div class="zikr-input-group">
+                <label for="istighfarCount">Istighfar</label>
+                <input type="number" id="istighfarCount" placeholder="Nombre d'Istighfar" min="0">
+            </div>
+            <div class="zikr-input-group">
+                <label for="basmalaCount">Basmala</label>
+                <input type="number" id="basmalaCount" placeholder="Nombre de Basmala" min="0">
+            </div>
+        </div>
+        <button onclick="ajouterParticipant()">Ajouter</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th colspan="2">Yasin</th>
+                <th colspan="2">Ya Latif</th>
+                <th colspan="2">Istighfar</th>
+                <th colspan="2">Basmala</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="participantTable"></tbody>
+    </table>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
